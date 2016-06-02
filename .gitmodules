@@ -1,0 +1,4 @@
+[submodule "guide"]
+	path = guide
+	url = https://github.com/jvwong/guide
+	branch = gh-pages
