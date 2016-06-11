@@ -1,0 +1,12 @@
+{
+  "name": "guide",
+  "version": "1.0.0",
+  "devDependencies": {
+    "babel-cli": "^6.0.0",
+    "babel-plugin-transform-react-jsx": "^6.8.0",
+    "babel-plugin-transform-react-inline-elements": "^6.8.0"
+  },
+  "scripts": {
+    "babel": "babel guide/src/js --out-file guide/public/js/babel-compiled.js"
+  }
+}
