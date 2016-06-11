@@ -1,8 +1,5 @@
 {
   "plugins": [
-    "transform-react-jsx",
-    "transform-react-inline-elements"
-  ],
-  /*"minified": true,*/
-  "comments":	false
+    "transform-react-jsx"  
+  ]
 }
