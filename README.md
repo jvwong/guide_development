@@ -10,6 +10,7 @@ The following section describes how to get the site running locally.
 - [x] [Docker-Compose](https://docs.docker.com/compose/install/)
 - [x] [Git](https://git-scm.com/)
 - [x] [Node](https://nodejs.org/en/)
+- [x] [Fabric](http://www.fabfile.org/)
 
 ### Using Git
 Since we include the Guide Jekyll site as a submodule, we'll need to take care to properly clone the repository and version any changes.
@@ -86,3 +87,9 @@ You have three options to compile the JSX files inside the `src/js` directory to
   ``` shell
   $ npm run babel
   ```
+
+### Deploying to https://pathwaycommons.github.io/guide
+Just use the fabfile:
+``` shell
+$ fab deploy="This is the latest git commit message"
+```
