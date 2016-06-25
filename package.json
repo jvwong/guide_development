@@ -7,6 +7,6 @@
     "babel-plugin-transform-react-inline-elements": "^6.8.0"
   },
   "scripts": {
-    "babel": "babel guide/src/js --out-file guide/public/js/babel-compiled.js"
+    "babel": "babel guide/src/tmp --out-file guide/public/js/babel-compiled.js"
   }
 }
