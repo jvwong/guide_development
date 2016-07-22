@@ -144,7 +144,11 @@ gulp.task('css', function(){
  */
 gulp.task('jekyll-build', function (done) {
     // browserSync.notify(messages.jekyllBuild);
-    return cp.spawn( jekyll , ['build'], {
+    return cp.spawn( jekyll, [
+        'build',
+        '--config',
+        '_config_development.yml'
+      ], {
       stdio: 'inherit',
       cwd: app_root
     })
@@ -180,6 +184,8 @@ gulp.task('watch', function () {
   gulp.watch( [src_root + 'js/**/*.js'], ['js'] );
   gulp.watch( [src_root + 'sass/**/*.scss'], ['css'] );
   gulp.watch([
+    app_root + '_config*.yml',
+
     app_root + '*.html',
     app_root + '_case_studies/**/*.*',
     app_root + '_communications/**/*.*',
