@@ -25,7 +25,6 @@ def build_rmarkdown():
     """
     GUIDE_DIR = os.path.join(BASE_DIR, 'guide')
     RMD_DIR = os.path.join(BASE_DIR, 'guide/src/Rmd')
-    RMD_TEMPLATE = os.path.join(RMD_DIR, 'Rmarkdown_template.md')
 
     # Recurse down the RMD_DIR for each .Rmd file
     for root, dirs, filenames in os.walk(RMD_DIR):

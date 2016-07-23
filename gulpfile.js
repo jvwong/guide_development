@@ -1,4 +1,5 @@
 var process = require('process');
+var path = require('path');
 var objectAssign = require('object-assign');
 var gulp = require('gulp');
 var livereload = require('gulp-livereload');
@@ -16,9 +17,11 @@ var $ = require('gulp-load-plugins')();
 var runSequence = require('run-sequence');
 var pkg = require('./package.json');
 var deps = Object.keys( pkg.dependencies || {} );
-var yaml = require('gulp-yaml');
+var yaml = require('js-yaml');
+var fs   = require('fs');
 
 var browserSync = require('browser-sync').create();
+var modRewrite  = require('connect-modrewrite');
 var cp          = require('child_process');
 var jekyll   = process.platform === 'win32' ? 'jekyll.bat' : 'jekyll';
 var messages = {
@@ -26,10 +29,18 @@ var messages = {
 };
 
 var app_root = './guide/'
-var src_root = app_root + 'src/';
-var site_root = app_root + '_site/';
-var static_directory = 'public/';
-var static_root = app_root + static_directory;
+// Try to load _config.yml as json, or throw exception on error
+try {
+  var jconfig = yaml.safeLoad(fs.readFileSync( app_root + '_config.yml', 'utf8'));
+  //console.log(jconfig);
+} catch (e) {
+  console.log(e);
+}
+var src_root = path.join(app_root, jconfig.src_root);
+var site_root = path.join(app_root, jconfig.site_root);
+var static_directory = path.join(jconfig.static_root);
+var static_root = path.join(app_root, static_directory);
+
 
 var logError = function( err ){
   notifier.notify({ title: pkg.name, message: 'Error: ' + err.message });
@@ -52,8 +63,8 @@ var getBrowserified = function( opts ){
     fullPaths: true,
     bundleExternal: true,
     entries: [
-      src_root + 'js/boot.js',
-      src_root + 'js/efetch_panel.js'
+      path.join(src_root, 'js/boot.js'),
+      path.join(src_root, 'js/efetch_panel.js')
     ]
   }, opts );
 
@@ -85,9 +96,9 @@ var bundle = function( b ){
  */
 gulp.task('js', function(){
   return bundle( transform( getBrowserified() ) )
-    .pipe( gulp.dest(site_root + static_directory + 'js') ) //direct
+    .pipe( gulp.dest(path.join(site_root, static_directory, 'js')) ) //direct
     .pipe( browserSync.reload({stream:true}) )
-    .pipe( gulp.dest(static_root + 'js') ) //in case of jekyll-build call
+    .pipe( gulp.dest(path.join(static_root, 'js')) ) //in case of jekyll-build call
   ;
 });
 
@@ -109,9 +120,9 @@ gulp.task('js-deps', function(){
     .on( 'error', handleErr )
     .pipe( source('deps.js') )
     .pipe( buffer() )
-    .pipe( gulp.dest(site_root + static_directory + 'js') ) //direct
+    .pipe( gulp.dest(path.join(site_root, static_directory, 'js')) ) //direct
     .pipe( browserSync.reload({stream:true}) )
-    .pipe( gulp.dest(static_root + 'js') ) //in case of jekyll-build call
+    .pipe( gulp.dest(path.join(static_root, 'js')) ) //in case of jekyll-build call
   );
 });
 
@@ -121,7 +132,7 @@ var sass = function( s ){
     .pipe( $.sourcemaps.init() )
     .pipe( $.sass().on('error', $.sass.logError) )
     .pipe( $.sass({
-      includePaths: [src_root + 'sass'], //import
+      includePaths: [path.join(src_root, 'sass')], //import
       sourceMap: true,
       sourceMapRoot: '../',
       outputStyle: 'compressed',
@@ -129,25 +140,25 @@ var sass = function( s ){
     }) )
     .pipe( $.sourcemaps.write() )
     .pipe( $.rename('main.css') )
-    .pipe( gulp.dest(site_root + static_directory + 'css') ) //direct
+    .pipe( gulp.dest(path.join(site_root, static_directory, 'css')) ) //direct
     .pipe( browserSync.reload({stream:true}) )
-    .pipe( gulp.dest(static_root + 'css') ) //in case of jekyll-build call
+    .pipe( gulp.dest(path.join(static_root, 'css')) ) //in case of jekyll-build call
   );
 };
 
 gulp.task('css', function(){
-  return sass( gulp.src( src_root + 'sass/main.scss') );
+  return sass( gulp.src( path.join(src_root, 'sass', 'main.scss')) );
 });
 
 /**
  * Build the Jekyll Site
  */
 gulp.task('jekyll-build', function (done) {
-    // browserSync.notify(messages.jekyllBuild);
+    browserSync.notify(messages.jekyllBuild);
     return cp.spawn( jekyll, [
         'build',
         '--config',
-        '_config_development.yml'
+        '_config.yml'
       ], {
       stdio: 'inherit',
       cwd: app_root
@@ -171,7 +182,12 @@ gulp.task('browser-sync', ['css', 'js-deps', 'js', 'jekyll-build'], function() {
       server: {
         baseDir: site_root
       },
-      port: '8080'
+      port: '8080',
+      middleware: [
+        modRewrite([
+                    '^/guide/(.*) /$1 [L]'
+                ])
+      ]
     });
 });
 
@@ -181,22 +197,21 @@ gulp.task('browser-sync', ['css', 'js-deps', 'js', 'jekyll-build'], function() {
  */
 gulp.task('watch', function () {
   gulp.watch( ['./package.json'], ['js-deps'] );
-  gulp.watch( [src_root + 'js/**/*.js'], ['js'] );
-  gulp.watch( [src_root + 'sass/**/*.scss'], ['css'] );
+  gulp.watch( [path.join(src_root, 'js/**/*.js')], ['js'] );
+  gulp.watch( [path.join(src_root, 'sass/**/*.scss')], ['css'] );
   gulp.watch([
-    app_root + '_config*.yml',
-
-    app_root + '*.html',
-    app_root + '_case_studies/**/*.*',
-    app_root + '_communications/**/*.*',
-    app_root + '_data/**/*.*',
-    app_root + '_datasets/**/*.*',
-    app_root + '_includes/**/*.*',
-    app_root + '_layouts/**/*.*',
-    app_root + '_primers/**/*.*',
-    app_root + '_reading_list/**/*.*',
-    app_root + '_media/**/*.*'
-  ], ['jekyll-rebuild']);
+    '_config*.yml',
+    '*.html',
+    '_case_studies/**/*.*',
+    '_communications/**/*.*',
+    '_data/**/*.*',
+    '_datasets/**/*.*',
+    '_includes/**/*.*',
+    '_layouts/**/*.*',
+    '_primers/**/*.*',
+    '_reading_list/**/*.*',
+    '_media/**/*.*'
+  ].map(function(p){ return path.join(app_root, p)}), ['jekyll-rebuild']);
 });
 
 gulp.task('default', ['browser-sync', 'watch'], function( next ){
@@ -204,7 +219,7 @@ gulp.task('default', ['browser-sync', 'watch'], function( next ){
 });
 
 gulp.task('clean', function(){
-  return gulp.src(static_root)
+  return gulp.src([static_root, site_root])
     .pipe( clean() )
   ;
 });
