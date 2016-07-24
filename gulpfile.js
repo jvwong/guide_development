@@ -19,6 +19,8 @@ var pkg = require('./package.json');
 var deps = Object.keys( pkg.dependencies || {} );
 var yaml = require('js-yaml');
 var fs   = require('fs');
+var walk = require('walk');
+var Q = require('q');
 
 var browserSync = require('browser-sync').create();
 var modRewrite  = require('connect-modrewrite');
@@ -40,7 +42,6 @@ var src_root = path.join(app_root, jconfig.src_root);
 var site_root = path.join(app_root, jconfig.site_root);
 var static_directory = path.join(jconfig.static_root);
 var static_root = path.join(app_root, static_directory);
-
 
 var logError = function( err ){
   notifier.notify({ title: pkg.name, message: 'Error: ' + err.message });
@@ -150,6 +151,60 @@ gulp.task('css', function(){
   return sass( gulp.src( path.join(src_root, 'sass', 'main.scss')) );
 });
 
+
+/**
+ * Process Rmarkdown
+ */
+var rMarkdownFileHandler = function(root, fileStat, next) {
+  var rmd_dir = path.join(src_root, 'Rmd');
+  var source = path.resolve(root, fileStat.name);
+  var target_path = path.join(path.relative(rmd_dir, root));
+  var media_path = path.join(target_path, $.util.replaceExtension(fileStat.name, ''))
+  var destination = path.resolve(app_root, path.join(target_path, $.util.replaceExtension(fileStat.name, '.md')));
+
+  console.log(root); console.log(source);  console.log(target_path);
+  console.log(media_path); console.log(destination);
+
+  cp.spawn( 'Rscript', [
+     'build.R',
+      source,
+      destination,
+      media_path
+    ], {
+    stdio: 'inherit',
+    cwd: app_root
+  })
+    .on('close', next);
+};
+
+var rMarkdownEndHandler = function (done) {
+  console.log("R markdown complete");
+  done();
+}
+
+var handleRMarkdown = function(path, done){
+  var walker = walk.walk(path);
+  walker.on('file', rMarkdownFileHandler);
+  walker.on("end", function(){
+    rMarkdownEndHandler(done);
+  });
+};
+
+/* Single file update in watch */
+var handleRMarkdownUpdate = function(file){
+  var rootPath = path.relative(process.cwd(), file.path);  
+  var fileStat = objectAssign({
+    name: path.basename(file.path),
+    type: 'file'
+  }, fs.statSync(file.path) );
+  rMarkdownFileHandler(path.dirname(rootPath), fileStat, Q.defer().resolve);
+};
+
+// Process all markdown files in a directory
+gulp.task('rmarkdown', function (done) {
+  handleRMarkdown(path.join(src_root, 'Rmd'), done);
+});
+
 /**
  * Build the Jekyll Site
  */
@@ -157,6 +212,7 @@ gulp.task('jekyll-build', function (done) {
     browserSync.notify(messages.jekyllBuild);
     return cp.spawn( jekyll, [
         'build',
+        '--incremental',
         '--config',
         '_config.yml'
       ], {
@@ -176,7 +232,7 @@ gulp.task('jekyll-rebuild', ['jekyll-build'], function () {
 /**
  * Wait for jekyll-build, then launch the Server
  */
-gulp.task('browser-sync', ['css', 'js-deps', 'js', 'jekyll-build'], function() {
+gulp.task('browser-sync', ['css', 'js-deps', 'js', 'rmarkdown', 'jekyll-build'], function() {
     browserSync.init({
       // Serve files from the site_root directory
       server: {
@@ -185,7 +241,7 @@ gulp.task('browser-sync', ['css', 'js-deps', 'js', 'jekyll-build'], function() {
       port: '8080',
       middleware: [
         modRewrite([
-                    '^/guide/(.*) /$1 [L]'
+                    '^/guide/(.*) /$1 [L]' // baseurl un-mapping
                 ])
       ]
     });
@@ -199,6 +255,7 @@ gulp.task('watch', function () {
   gulp.watch( ['./package.json'], ['js-deps'] );
   gulp.watch( [path.join(src_root, 'js/**/*.js')], ['js'] );
   gulp.watch( [path.join(src_root, 'sass/**/*.scss')], ['css'] );
+  gulp.watch( path.join(src_root, 'Rmd/**/*.Rmd') ).on('change', handleRMarkdownUpdate);
   gulp.watch([
     '_config*.yml',
     '*.html',
@@ -209,8 +266,7 @@ gulp.task('watch', function () {
     '_includes/**/*.*',
     '_layouts/**/*.*',
     '_primers/**/*.*',
-    '_reading_list/**/*.*',
-    '_media/**/*.*'
+    '_reading_list/**/*.*'
   ].map(function(p){ return path.join(app_root, p)}), ['jekyll-rebuild']);
 });
 
