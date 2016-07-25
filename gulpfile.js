@@ -161,10 +161,8 @@ var rMarkdownFileHandler = function(root, fileStat, next) {
   var target_path = path.join(path.relative(rmd_dir, root));
   var media_path = path.join(target_path, $.util.replaceExtension(fileStat.name, ''))
   var destination = path.resolve(app_root, path.join(target_path, $.util.replaceExtension(fileStat.name, '.md')));
-
-  console.log(root); console.log(source);  console.log(target_path);
-  console.log(media_path); console.log(destination);
-
+  // console.log(root); console.log(source);  console.log(target_path);
+  // console.log(media_path); console.log(destination);
   cp.spawn( 'Rscript', [
      'build.R',
       source,
@@ -192,7 +190,7 @@ var handleRMarkdown = function(path, done){
 
 /* Single file update in watch */
 var handleRMarkdownUpdate = function(file){
-  var rootPath = path.relative(process.cwd(), file.path);  
+  var rootPath = path.relative(process.cwd(), file.path);
   var fileStat = objectAssign({
     name: path.basename(file.path),
     type: 'file'
