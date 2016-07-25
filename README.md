@@ -12,7 +12,7 @@ The following section describes how to get the site running locally. The version
 - [x] [Node](https://nodejs.org/en/) (v0.10.26)
 - [x] [R](https://www.r-project.org/) (v3.2.3)
 
-### Optional 
+### Optional
 - [ ] [Docker](https://docs.docker.com/engine/installation/) (1.10.1)
 - [ ] [Docker-Compose](https://docs.docker.com/compose/install/) ()
 - [ ] [Fabric](http://www.fabfile.org/)
@@ -25,7 +25,7 @@ Clone this repository onto your machine:
 
 ``` shell
 	$ git clone --recursive https://github.com/jvwong/guide_development
-	$ cd guide
+	$ cd guide_development
 ```
 The `--recursive` flag will pull down any submodules.
 
@@ -54,38 +54,18 @@ modified:   guide (new commits, modified content)
 You'll need to cd into the submodule and do the commit and push there, then push the main repo.
 
 ## Development
-### Using Docker
-This repo uses the official [Jekyll image](https://hub.docker.com/r/jekyll/jekyll/tags/) (v3.1.6) built off a lightweight [Alpine Linux image](https://hub.docker.com/_/alpine/).
-
-``` shell
-$ docker-compose up
-```
-
-Docker will pull in any images it requires and install any components that you've indicated in the guide repo Gemfile. Point to the correct docker-machine ip, port, and path:
-
-``` shell
-$ curl http://`docker-machine ip`:4000/guide/
-```
-
-Run the alternative docker-compose config with the production-related environment variables.
-
-``` shell
-$ docker-compose --file=docker-compose-testing.yml up
-```
-
-> Note: You might get a 404 for the javascript `babel-compiled.js`. You'll need to compile this before pushing to the server.
-
 ### Using Gulp
-The [gulpfile.js](https://github.com/jvwong/guide_development/blob/master/gulpfile.js) contains tasks for building and watching all static assets including processing [R Markdown](http://rmarkdown.rstudio.com/) files. Browser auto-reload on file changes is enabled via [browserSync](https://www.browsersync.io/). 
+The [gulpfile.js](https://github.com/jvwong/guide_development/blob/master/gulpfile.js) contains tasks for building and watching all static assets including processing [R Markdown](http://rmarkdown.rstudio.com/) files. Browser auto-reload on file changes is enabled via [browserSync](https://www.browsersync.io/).
 
 #### Build and Run
 When inside the parent directory, to build assets and launch the application server, simply type:
 
 ```shell
+ $ npm install
  $ gulp
 ```  
- 
-Point your browser at  `http://localhost:8080/`. Note that the app is served from root and not the `baseurl`. 
+
+Point your browser at  `http://localhost:8080/`. Note that the app is served from root and not the `baseurl`.
 
 ### Deploying to https://pathwaycommons.github.io/guide
 Use the convenient fabric configuration file to launch a new deploy to the server:
