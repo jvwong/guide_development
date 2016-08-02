@@ -7,15 +7,15 @@ The following section describes how to get the site running locally. The version
 
 ### Requirements
 - [x] [Git](https://git-scm.com/)
-- [x] [Jekyll](https://jekyllrb.com/docs/installation/) (v3.1.6)
-- [x] [Python](https://www.python.org/download/releases/2.7/) (v2.7)
-- [x] [Node](https://nodejs.org/en/) (v0.10.26)
-- [x] [R](https://www.r-project.org/) (v3.2.3)
+- [x] [Jekyll](https://jekyllrb.com/docs/installation/) (3.1.6)
+- [x] [Python](https://www.python.org/download/releases/2.7/) (2.7)
+- [x] [Node](https://nodejs.org/en/) (0.10.26)
+- [x] [R](https://www.r-project.org/) (3.2.3)
 
 ### Optional
 - [ ] [Docker](https://docs.docker.com/engine/installation/) (1.10.1)
-- [ ] [Docker-Compose](https://docs.docker.com/compose/install/) ()
-- [ ] [Fabric](http://www.fabfile.org/)
+- [ ] [Docker-Compose](https://docs.docker.com/compose/install/) (1.7.0rc1)
+- [ ] [Fabric](http://www.fabfile.org/) (1.11.1)
 
 ### Using Git
 Since we include the Guide Jekyll site as a submodule, we'll need to take care to properly clone the repository and version any changes.

@@ -89,6 +89,7 @@ var bundle = function( b ){
     .on( 'error', handleErr )
     .pipe( source('babel-compiled.js') )
     .pipe( buffer() )
+    .pipe( $.uglify() )
   ) ;
 };
 
@@ -264,7 +265,8 @@ gulp.task('watch', function () {
     '_includes/**/*.*',
     '_layouts/**/*.*',
     '_primers/**/*.*',
-    '_reading_list/**/*.*'
+    '_reading_list/**/*.*',
+    '_tools/**/*.*'
   ].map(function(p){ return path.join(app_root, p)}), ['jekyll-rebuild']);
 });
 
