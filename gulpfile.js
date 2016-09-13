@@ -230,8 +230,13 @@ gulp.task('jekyll-rebuild', ['jekyll-build'], function () {
 
 /**
  * Wait for jekyll-build, then launch the Server
+ * I'm shutting off the initial rmarkdown build
  */
-gulp.task('browser-sync', ['css', 'js-deps', 'js', 'rmarkdown', 'jekyll-build'], function() {
+gulp.task('browser-sync', ['css',
+                           'js-deps',
+                           'js',
+                          //'rmarkdown',
+                           'jekyll-build'], function() {
     browserSync.init({
       // Serve files from the site_root directory
       server: {
@@ -258,6 +263,7 @@ gulp.task('watch', function () {
   gulp.watch([
     '_config*.yml',
     '*.html',
+    '*.md',
     '_case_studies/**/*.*',
     '_communications/**/*.*',
     '_data/**/*.*',
@@ -266,6 +272,7 @@ gulp.task('watch', function () {
     '_layouts/**/*.*',
     '_primers/**/*.*',
     '_reading_list/**/*.*',
+    'media/**/*.*',
     '_tools/**/*.*'
   ].map(function(p){ return path.join(app_root, p)}), ['jekyll-rebuild']);
 });
