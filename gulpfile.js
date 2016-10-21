@@ -157,14 +157,25 @@ gulp.task('css', function(){
  * Process Rmarkdown
  */
 var rMarkdownFileHandler = function(root, fileStat, next) {
+
+  //punt if this isn't .Rmd file  
+  if( path.extname(fileStat.name) !== '.Rmd'){
+     return next();
+  }
+
   var rmd_dir = path.join(src_root, 'Rmd');
   var source = path.resolve(root, fileStat.name);
   var target_path = path.join(path.relative(rmd_dir, root));
   var media_path = path.join(target_path, $.util.replaceExtension(fileStat.name, ''))
   var destination = path.resolve(app_root, path.join(target_path, $.util.replaceExtension(fileStat.name, '.md')));
-  // console.log(root); console.log(source);  console.log(target_path);
-  // console.log(media_path); console.log(destination);
-  cp.spawn( 'Rscript', [
+
+  // console.log(root);
+  // console.log(source);
+  // console.log(target_path);
+  // console.log(media_path);
+  // console.log(destination);
+
+  cp.spawn( '/Library/Frameworks/R.framework/Versions/3.2/Resources/Rscript', [
      'build.R',
       source,
       destination,
@@ -272,8 +283,8 @@ gulp.task('watch', function () {
     '_layouts/**/*.*',
     '_primers/**/*.*',
     '_reading_list/**/*.*',
-    'media/**/*.*',
-    '_tools/**/*.*'
+    '_analysis/**/*.*',
+    'media/**/*.*'
   ].map(function(p){ return path.join(app_root, p)}), ['jekyll-rebuild']);
 });
 
