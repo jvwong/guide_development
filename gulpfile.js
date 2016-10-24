@@ -65,7 +65,8 @@ var getBrowserified = function( opts ){
     bundleExternal: true,
     entries: [
       path.join(src_root, 'js/boot.js'),
-      path.join(src_root, 'js/efetch_panel.js')
+      path.join(src_root, 'js/efetch_panel.js'),
+      path.join(src_root, 'js/progress_tracker.js')
     ]
   }, opts );
 
@@ -158,7 +159,7 @@ gulp.task('css', function(){
  */
 var rMarkdownFileHandler = function(root, fileStat, next) {
 
-  //punt if this isn't .Rmd file  
+  //punt if this isn't .Rmd file
   if( path.extname(fileStat.name) !== '.Rmd'){
      return next();
   }
@@ -284,6 +285,7 @@ gulp.task('watch', function () {
     '_primers/**/*.*',
     '_reading_list/**/*.*',
     '_analysis/**/*.*',
+    '_workflows/**/*.*',
     'media/**/*.*'
   ].map(function(p){ return path.join(app_root, p)}), ['jekyll-rebuild']);
 });

@@ -1,0 +1,24 @@
+{
+  "name": "guide",
+  "description": "Pathway Commons Guide application",
+  "main": "index.html",
+  "authors": [
+    "pathwaycommons"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "pathways",
+    "guide"
+  ],
+  "homepage": "https://github.com/jvwong/guide_development",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "progress-tracker": "^1.4.0"
+  }
+}
