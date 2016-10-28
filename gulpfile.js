@@ -66,7 +66,8 @@ var getBrowserified = function( opts ){
     entries: [
       path.join(src_root, 'js/boot.js'),
       path.join(src_root, 'js/efetch_panel.js'),
-      path.join(src_root, 'js/progress_tracker.js')
+      path.join(src_root, 'js/progress_tracker.js'),
+      path.join(src_root, 'bower_components/gist-embed/gist-embed.min.js')
     ]
   }, opts );
 
@@ -90,7 +91,7 @@ var bundle = function( b ){
     .on( 'error', handleErr )
     .pipe( source('babel-compiled.js') )
     .pipe( buffer() )
-    .pipe( $.uglify() )
+    // .pipe( $.uglify() )
   ) ;
 };
 
