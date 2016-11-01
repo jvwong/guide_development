@@ -20,6 +20,7 @@
   ],
   "dependencies": {
     "progress-tracker": "^1.4.0",
-    "gist-embed": "*"
+    "gist-embed": "*",
+    "iframe-resizer": "^3.5.5"
   }
 }

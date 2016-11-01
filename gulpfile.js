@@ -64,10 +64,9 @@ var getBrowserified = function( opts ){
     fullPaths: true,
     bundleExternal: true,
     entries: [
-      path.join(src_root, 'js/boot.js'),
-      path.join(src_root, 'js/efetch_panel.js'),
-      path.join(src_root, 'js/progress_tracker.js'),
-      path.join(src_root, 'bower_components/gist-embed/gist-embed.min.js')
+      path.join(src_root, 'js/main.js'),
+      path.join(src_root, 'bower_components/gist-embed/gist-embed.min.js'),
+      path.join(src_root, 'bower_components/iframe-resizer/js/iframeResizer.contentWindow.min.js')
     ]
   }, opts );
 
@@ -91,19 +90,29 @@ var bundle = function( b ){
     .on( 'error', handleErr )
     .pipe( source('babel-compiled.js') )
     .pipe( buffer() )
-    // .pipe( $.uglify() )
+    .pipe( $.uglify() )
   ) ;
 };
+
 
 /*
  * Bundle the src/js dependencies to babel-compiled.js
  */
-gulp.task('js', function(){
+gulp.task('js', ['lint'], function(){
   return bundle( transform( getBrowserified() ) )
     .pipe( gulp.dest(path.join(site_root, static_directory, 'js')) ) //direct
     .pipe( browserSync.reload({stream:true}) )
     .pipe( gulp.dest(path.join(static_root, 'js')) ) //in case of jekyll-build call
   ;
+});
+
+/*
+ * Lint the js
+ */
+gulp.task('lint', function () {
+    return gulp.src(path.join(src_root, 'js/**/*.js'))
+    .pipe($.jshint())
+    .pipe($.jshint.reporter( 'jshint-stylish' ));
 });
 
 /*
@@ -270,7 +279,7 @@ gulp.task('browser-sync', ['css',
  */
 gulp.task('watch', function () {
   gulp.watch( ['./package.json'], ['js-deps'] );
-  gulp.watch( [path.join(src_root, 'js/**/*.js')], ['js'] );
+  gulp.watch( [path.join(src_root, 'js/**/*.js*')], ['js'] );
   gulp.watch( [path.join(src_root, 'sass/**/*.scss')], ['css'] );
   gulp.watch( path.join(src_root, 'Rmd/**/*.Rmd') ).on('change', handleRMarkdownUpdate);
   gulp.watch([
