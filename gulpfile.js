@@ -1,4 +1,5 @@
 var process = require('process');
+var mkdirp = require('mkdirp');
 var path = require('path');
 var objectAssign = require('object-assign');
 var gulp = require('gulp');
@@ -179,12 +180,18 @@ var rMarkdownFileHandler = function(root, fileStat, next) {
   var target_path = path.join(path.relative(rmd_dir, root));
   var media_path = path.join(target_path, $.util.replaceExtension(fileStat.name, ''))
   var destination = path.resolve(app_root, path.join(target_path, $.util.replaceExtension(fileStat.name, '.md')));
+  var destination_dir = path.parse(destination);
 
-  // console.log(root);
-  // console.log(source);
-  // console.log(target_path);
-  // console.log(media_path);
-  // console.log(destination);
+  // console.log('root: %s', root);
+  // console.log('source: %s', source);
+  // console.log('target_path: %s', target_path);
+  // console.log('media_path: %s', media_path);
+  // console.log('destination: %s', destination);
+  // console.log('md_path.dir: %s', md_path.dir);
+
+  // Create the directories.
+  // Don't do this with media - manual
+  mkdirp.sync(destination_dir.dir);
 
   cp.spawn( '/Library/Frameworks/R.framework/Versions/3.2/Resources/Rscript', [
      'build.R',
@@ -252,12 +259,11 @@ gulp.task('jekyll-rebuild', ['jekyll-build'], function () {
 
 /**
  * Wait for jekyll-build, then launch the Server
- * I'm shutting off the initial rmarkdown build
  */
 gulp.task('browser-sync', ['css',
                            'js-deps',
                            'js',
-                          //'rmarkdown',
+                          //  'rmarkdown',
                            'jekyll-build'], function() {
     browserSync.init({
       // Serve files from the site_root directory
@@ -305,7 +311,14 @@ gulp.task('default', ['browser-sync', 'watch'], function( next ){
 });
 
 gulp.task('clean', function(){
-  return gulp.src([static_root, site_root])
+  return gulp.src([
+    static_root,
+    site_root,
+    path.join(app_root, '_workflows'),
+    path.join(app_root, '_primers'),
+    path.join(app_root, '_presentations'),
+    path.join(app_root, '_case_studies')
+  ])
     .pipe( clean() )
   ;
 });
