@@ -53,6 +53,26 @@ modified:   guide (new commits, modified content)
 
 You'll need to cd into the submodule and do the commit and push there, then push the main repo.
 
+## Run with Docker
+We'll use docker-compose.
+
+```shell
+$ docker-compose up
+```
+
+Get the local IP for your docker machine name (name 'default') 
+```shell
+$ docker-machine ip default
+```
+
+Point your browser at port 4000
+```shell
+$ curl $(docker-machine ip default):4000
+```
+
+
+
+
 ## Development
 ### Using Gulp
 The [gulpfile.js](https://github.com/jvwong/guide_development/blob/master/gulpfile.js) contains tasks for building and watching all static assets including processing [R Markdown](http://rmarkdown.rstudio.com/) files. Browser auto-reload on file changes is enabled via [browserSync](https://www.browsersync.io/).
