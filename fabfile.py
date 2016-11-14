@@ -17,26 +17,43 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 ### Run with `$ fab deploy:message="This is a commit"`
 def deploy(*args, **kwargs):
-    print("Commiting to git with message '%s'" % kwargs['message'])
-    _lgitcommit(kwargs['message'])
 
-    print("Pushing to gh-pages...")
-    _lgitpush()
+    print("Building...")
+    _lbuild()
 
-    print("Tagging this as LIVE...")
-    _lgittag()
+    print("Commiting to master with message '%s'" % kwargs['message'])
+    _lgitcommit(kwargs['message'], branch='master')
+
+    print("Preparing the gh-pages branch...")
+    _lprepare()
+
+    # print("Pushing to gh-pages...")
+    # _lgitpush()
+    #
+    # print("Tagging this as LIVE...")
+    # _lgittag()
 
     print("Done")
 
-def _lgitcommit(message='update `date +COMMIT-%F/%H%M`'):
-    local('cd guide && git add .')
+def _lbuild():
+    local('cd guide && jekyll build')
+
+def _lprepare():
+    pass
+    # local('cd guide && git checkout gh-pages')
+    # local('cd guide && ls | grep -v _site| xargs rm -rf')
+    # local('cd guide && cp -r _site/* . && rm -rf _site/')
+    # local('cd guide && touch .nojekyll')
+
+def _lgitcommit(message='update `date +COMMIT-%F/%H%M`', branch='master'):
+    local('cd guide && git checkout %s' %(branch,))
     with settings(warn_only=True):
         result = local('cd guide && git commit -am "%s"' % (message,))
     if result.failed and not confirm("No commits to make. Continue anyway?"):
         abort("Aborting at user request.")
 
 def _lgitpush():
-    local('cd guide && git push origin gh-pages')
+    local('cd guide && git push --all origin')
 
 def _lgittag():
     local('cd guide && git tag -f LIVE')
