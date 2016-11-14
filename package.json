@@ -1,6 +1,11 @@
 {
   "name": "guide",
   "version": "1.0.0",
+  "license" : "MIT",
+  "repository" : {
+    "type" : "git"
+  , "url" : "https://github.com/jvwong/guide_development"
+  },
   "description": "Pathway Commons Guide application",
   "scripts": {
     "start": "gulp watch",
@@ -34,6 +39,7 @@
     "gulp-watch-less": "^1.0.1",
     "gulp-yaml": "^1.0.1",
     "js-yaml": "^3.6.1",
+    "jshint": "^2.9.4",
     "jshint-stylish": "^2.2.1",
     "mkdirp": "^0.5.1",
     "node-notifier": "^4.6.0",
