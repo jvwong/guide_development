@@ -160,7 +160,7 @@ var sass = function( s ){
   );
 };
 
-gulp.task('css', function(){
+gulp.task('css', function(){  
   return sass( gulp.src( path.join(src_root, 'sass', 'main.scss')) );
 });
 
@@ -263,7 +263,7 @@ gulp.task('jekyll-rebuild', ['jekyll-build'], function () {
 gulp.task('browser-sync', ['css',
                            'js-deps',
                            'js',
-                          //  'rmarkdown',
+                           'rmarkdown',
                            'jekyll-build'], function() {
     browserSync.init({
       // Serve files from the site_root directory
