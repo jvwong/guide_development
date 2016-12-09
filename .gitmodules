@@ -1,4 +1,4 @@
 [submodule "guide"]
 	path = guide
-	url = https://github.com/jvwong/guide
-	branch = gh-pages
+	url = https://github.com/PathwayCommons/guide
+	branch = master

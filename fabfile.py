@@ -21,15 +21,12 @@ def deploy(*args, **kwargs):
     print("Building...")
     _lbuild()
 
-    print("Commiting to master with message '%s'" % kwargs['message'])
+    print("Commit to master with message '%s'" % kwargs['message'])
     _lgitcommit(kwargs['message'], branch='master')
 
-    print("Preparing the gh-pages branch...")
-    _lprepare()
+    print("Pushing to gh-pages...")
+    _lgitpush()
 
-    # print("Pushing to gh-pages...")
-    # _lgitpush()
-    #
     # print("Tagging this as LIVE...")
     # _lgittag()
 
@@ -38,22 +35,15 @@ def deploy(*args, **kwargs):
 def _lbuild():
     local('cd guide && jekyll build')
 
-def _lprepare():
-    pass
-    # local('cd guide && git checkout gh-pages')
-    # local('cd guide && ls | grep -v _site| xargs rm -rf')
-    # local('cd guide && cp -r _site/* . && rm -rf _site/')
-    # local('cd guide && touch .nojekyll')
-
 def _lgitcommit(message='update `date +COMMIT-%F/%H%M`', branch='master'):
-    local('cd guide && git checkout %s' %(branch,))
     with settings(warn_only=True):
         result = local('cd guide && git commit -am "%s"' % (message,))
     if result.failed and not confirm("No commits to make. Continue anyway?"):
         abort("Aborting at user request.")
 
 def _lgitpush():
-    local('cd guide && git push --all origin')
+    local('cd guide && git push origin master')
+    local('cd guide && git subtree push --prefix _site origin gh-pages')
 
 def _lgittag():
     local('cd guide && git tag -f LIVE')
