@@ -66,7 +66,6 @@ var getBrowserified = function( opts ){
     bundleExternal: true,
     entries: [
       path.join(src_root, 'js/main.js'),
-      path.join(src_root, 'bower_components/gist-embed/gist-embed.min.js'),
       path.join(src_root, 'bower_components/iframe-resizer/js/iframeResizer.contentWindow.min.js')
     ]
   }, opts );
@@ -160,7 +159,7 @@ var sass = function( s ){
   );
 };
 
-gulp.task('css', function(){  
+gulp.task('css', function(){
   return sass( gulp.src( path.join(src_root, 'sass', 'main.scss')) );
 });
 

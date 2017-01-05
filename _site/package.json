@@ -1,10 +1,10 @@
 {
   "name": "guide",
   "version": "1.0.0",
-  "license" : "MIT",
-  "repository" : {
-    "type" : "git"
-  , "url" : "https://github.com/jvwong/guide_development"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jvwong/guide_development"
   },
   "description": "Pathway Commons Guide application",
   "scripts": {
@@ -53,5 +53,10 @@
     "walk": "^2.3.9",
     "watchify": "^3.7.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "jquery": "^3.1.1",
+    "react": "^15.4.1",
+    "react-dom": "^15.4.1"
+  }
 }

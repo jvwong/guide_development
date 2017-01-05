@@ -19,8 +19,8 @@
     "tests"
   ],
   "dependencies": {
-    "progress-tracker": "^1.4.0",
-    "gist-embed": "*",
-    "iframe-resizer": "^3.5.5"
+    "bootstrap": "^3.3.7",
+    "font-awesome": "^4.7.0",
+    "progress-tracker": "^1.4.0"
   }
 }

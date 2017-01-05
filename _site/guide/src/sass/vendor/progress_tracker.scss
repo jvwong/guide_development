@@ -13,36 +13,51 @@
 * Progress tracker overrides
 */
 
-.progress-tracker--vertical .progress-step:not(:last-child) .progress-text {
-  padding-bottom: 0.75rem;
-}
 
-.progress-tracker {
-  max-width: $container-max-width - 15rem;
-  margin-left: 5%;
-  a:link.progress-tracker-link,
-  a:hover.progress-tracker-link,
-  a:active.progress-tracker-link,
-  a:visited.progress-tracker-link{
-    text-decoration: none;
-  }
-  .progress-marker {
-    padding-bottom: 0px; // To align text within the marker
-  }
-
-}
-
-@media (min-width: 1025px) {
-  .progress-tracker {
-    position: fixed;
-    left: 1rem; // Move it to the right for 50% of parent element
-    max-width: $container-margin-left - 1rem;         /* standards-based answer for IE9+, FF16+ */
-    top: 5rem;
-    margin-left: auto;
-  }
-}
 
 .progress-tracker-wrapper {
+
+  .progress-tracker--vertical .progress-step:not(:last-child) .progress-text {
+    padding-bottom: 0.75rem;
+  }
+
+  .progress-tracker {
+    max-width: $container-max-width - 15rem;
+    margin-left: 5%;
+    a:link.progress-tracker-link,
+    a:hover.progress-tracker-link,
+    a:active.progress-tracker-link,
+    a:visited.progress-tracker-link{
+      text-decoration: none;
+    }
+    .progress-marker {
+      padding-bottom: 0px; // To align text within the marker
+    }
+
+  }
+
+  @media (min-width: 1200px) {
+    .progress-tracker {
+      position: fixed;
+      left: -2%;
+      top: 15%;
+      max-width: 25%;
+      .progress-subtitle, .progress-shadow {
+        visibility: hidden;
+      }
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .progress-tracker {
+      left: -2%;
+      // max-width: 24rem;
+      .progress-subtitle, .progress-shadow {
+        visibility: visible;
+      }
+    }
+  }
+
   .panel-heading, .panel-body{
     padding-left: 0;
     padding-right: 0;

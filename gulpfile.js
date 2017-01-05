@@ -65,9 +65,7 @@ var getBrowserified = function( opts ){
     fullPaths: true,
     bundleExternal: true,
     entries: [
-      path.join(src_root, 'js/main.js'),
-      path.join(src_root, 'bower_components/gist-embed/gist-embed.min.js'),
-      path.join(src_root, 'bower_components/iframe-resizer/js/iframeResizer.contentWindow.min.js')
+      path.join(src_root, 'js/main.js')
     ]
   }, opts );
 
@@ -160,7 +158,7 @@ var sass = function( s ){
   );
 };
 
-gulp.task('css', function(){  
+gulp.task('css', function(){
   return sass( gulp.src( path.join(src_root, 'sass', 'main.scss')) );
 });
 
@@ -175,9 +173,9 @@ var rMarkdownFileHandler = function(root, fileStat, next) {
      return next();
   }
 
-  var rmd_dir = path.join(src_root, 'Rmd');
+  var collections_dir = path.join(src_root, 'collections');
   var source = path.resolve(root, fileStat.name);
-  var target_path = path.join(path.relative(rmd_dir, root));
+  var target_path = path.join(path.relative(collections_dir, root));
   var media_path = path.join(target_path, $.util.replaceExtension(fileStat.name, ''))
   var destination = path.resolve(app_root, path.join(target_path, $.util.replaceExtension(fileStat.name, '.md')));
   var destination_dir = path.parse(destination);
@@ -229,8 +227,8 @@ var handleRMarkdownUpdate = function(file){
 };
 
 // Process all markdown files in a directory
-gulp.task('rmarkdown', function (done) {
-  handleRMarkdown(path.join(src_root, 'Rmd'), done);
+gulp.task('collections', function (done) {
+  handleRMarkdown(path.join(src_root, 'collections'), done);
 });
 
 /**
@@ -263,7 +261,7 @@ gulp.task('jekyll-rebuild', ['jekyll-build'], function () {
 gulp.task('browser-sync', ['css',
                            'js-deps',
                            'js',
-                           'rmarkdown',
+                           'collections',
                            'jekyll-build'], function() {
     browserSync.init({
       // Serve files from the site_root directory
@@ -287,7 +285,7 @@ gulp.task('watch', function () {
   gulp.watch( ['./package.json'], ['js-deps'] );
   gulp.watch( [path.join(src_root, 'js/**/*.js*')], ['js'] );
   gulp.watch( [path.join(src_root, 'sass/**/*.scss')], ['css'] );
-  gulp.watch( path.join(src_root, 'Rmd/**/*.Rmd') ).on('change', handleRMarkdownUpdate);
+  gulp.watch( path.join(src_root, 'collections/**/*.Rmd') ).on('change', handleRMarkdownUpdate);
   gulp.watch([
     '_config*.yml',
     '*.html',
