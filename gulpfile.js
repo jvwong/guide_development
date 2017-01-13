@@ -181,10 +181,10 @@ var rMarkdownFileHandler = function(root, fileStat, next) {
   var destination_dir = path.parse(destination);
 
   // console.log('root: %s', root);
-  // console.log('source: %s', source);
+  console.log('source: %s', source);
   // console.log('target_path: %s', target_path);
   // console.log('media_path: %s', media_path);
-  // console.log('destination: %s', destination);
+  console.log('destination: %s', destination);
   // console.log('md_path.dir: %s', md_path.dir);
 
   // Create the directories.

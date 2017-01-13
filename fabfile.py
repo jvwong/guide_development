@@ -37,7 +37,7 @@ def _lbuild():
 
 def _lgitcommit(message='update `date +COMMIT-%F/%H%M`', branch='master'):
     with settings(warn_only=True):
-        result = local('cd guide && git commit -am "%s"' % (message,))
+        result = local('cd guide && git add . && git commit -am "%s"' % (message,))
     if result.failed and not confirm("No commits to make. Continue anyway?"):
         abort("Aborting at user request.")
 

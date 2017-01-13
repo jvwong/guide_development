@@ -21,6 +21,9 @@
   "dependencies": {
     "bootstrap": "^3.3.7",
     "font-awesome": "^4.7.0",
-    "progress-tracker": "^1.4.0"
+    "progress-tracker": "^1.4.0",
+    "mermaid": "^6.0.0",
+    "cytoscape": "^2.7.13",
+    "jquery": "^3.1.1"
   }
 }
