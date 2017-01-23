@@ -9,7 +9,7 @@
   "description": "Pathway Commons Guide application",
   "scripts": {
     "start": "gulp watch",
-    "watch": "gulp watch",
+    "dev": "gulp default",
     "clean": "gulp clean"
   },
   "keywords": [
