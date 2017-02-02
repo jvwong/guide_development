@@ -290,17 +290,10 @@ gulp.task('watch', function () {
     '_config*.yml',
     '*.html',
     '*.md',
-    '_case_studies/**/*.*',
-    '_communications/**/*.*',
-    '_data/**/*.*',
-    '_datasets/**/*.*',
     '_includes/**/*.*',
     '_layouts/**/*.*',
-    '_primers/**/*.*',
-    '_reading_list/**/*.*',
-    '_analysis/**/*.*',
-    '_workflows/**/*.*',
-    'media/**/*.*'
+    'media/**/*.*',
+    '**/*.md'
   ].map(function(p){ return path.join(app_root, p)}), ['jekyll-rebuild']);
 });
 
