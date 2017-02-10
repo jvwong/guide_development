@@ -259,7 +259,7 @@ gulp.task('jekyll-rebuild', ['jekyll-build'], function () {
  * Wait for jekyll-build, then launch the Server
  */
 gulp.task('browser-sync', ['css',
-                           'js-deps',
+                          //  'js-deps',
                            'js',
                            'collections',
                            'jekyll-build'], function() {

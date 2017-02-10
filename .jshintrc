@@ -85,6 +85,7 @@
 
     // Custom Globals
     "globals"       : {
-        "guide"     : true
+        "guide"     : true,
+        "cytoscape" : true
       }        // additional predefined global variables
 }
