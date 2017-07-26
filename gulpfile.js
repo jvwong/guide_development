@@ -93,6 +93,12 @@ var bundle = function( b ){
   ) ;
 };
 
+/*
+ * Directory configured in ./.bowerrc
+ */
+gulp.task('bower', function() {
+  return $.bower();
+});
 
 /*
  * Bundle the src/js dependencies to babel-compiled.js
@@ -180,13 +186,6 @@ var rMarkdownFileHandler = function(root, fileStat, next) {
   var destination = path.resolve(app_root, path.join(target_path, $.util.replaceExtension(fileStat.name, '.md')));
   var destination_dir = path.parse(destination);
 
-  // console.log('root: %s', root);
-  console.log('source: %s', source);
-  // console.log('target_path: %s', target_path);
-  // console.log('media_path: %s', media_path);
-  console.log('destination: %s', destination);
-  // console.log('md_path.dir: %s', md_path.dir);
-
   // Create the directories.
   // Don't do this with media - manual
   mkdirp.sync(destination_dir.dir);
@@ -234,7 +233,7 @@ gulp.task('collections', function (done) {
 /**
  * Build the Jekyll Site
  */
-gulp.task('jekyll-build', function (done) {
+gulp.task('jekyll-build', [], function (done) {
     browserSync.notify(messages.jekyllBuild);
     return cp.spawn( jekyll, [
         'build',
@@ -258,11 +257,7 @@ gulp.task('jekyll-rebuild', ['jekyll-build'], function () {
 /**
  * Wait for jekyll-build, then launch the Server
  */
-gulp.task('browser-sync', ['css',
-                          //  'js-deps',
-                           'js',
-                           'collections',
-                           'jekyll-build'], function() {
+gulp.task('browser-sync', [], function() {
     browserSync.init({
       // Serve files from the site_root directory
       server: {
@@ -312,4 +307,31 @@ gulp.task('clean', function(){
   ])
     .pipe( clean() )
   ;
+});
+
+/**
+ * Build the entire site from scratch
+ */
+
+gulp.task('jekyll-build-base', [
+    'collections'
+  ], function (done) {
+     return cp.spawn( jekyll, [
+         'build',
+         '--config',
+         '_config.yml'
+       ], {
+       stdio: 'inherit',
+       cwd: app_root
+     })
+       .on('close', done);
+ });
+
+gulp.task('build', [
+  'bower',
+  'css',
+  'js-deps',
+  'js',
+  'jekyll-build-base'], function() {
+    return true;
 });
