@@ -175,7 +175,7 @@ gulp.task('css', function(){
 var rMarkdownFileHandler = function(root, fileStat, next) {
 
   //punt if this isn't .Rmd file
-  if( path.extname(fileStat.name) !== '.Rmd'){
+  if( path.extname(fileStat.name) !== '.Rmd' && path.extname(fileStat.name) !== '.html'){
      return next();
   }
 
