@@ -172,20 +172,15 @@ gulp.task('css', function(){
 /**
  * Process Rmarkdown
  */
-var rMarkdownFileHandler = function(root, fileStat, next) {
-
-  //punt if this isn't .Rmd file
-  if( path.extname(fileStat.name) !== '.Rmd' && path.extname(fileStat.name) !== '.html'){
-     return next();
-  }
+var rMarkdownFileHandler = function( root, fileStats, next ) {  
 
   var collections_dir = path.join(src_root, 'collections');
-  var source = path.resolve(root, fileStat.name);
+  var source = path.resolve(root, fileStats.name);
   var target_path = path.join(path.relative(collections_dir, root));
-  var media_path = path.join(target_path, $.util.replaceExtension(fileStat.name, ''))
-  var destination = path.resolve(app_root, path.join(target_path, $.util.replaceExtension(fileStat.name, '.md')));
+  var media_path = path.join(target_path, $.util.replaceExtension(fileStats.name, ''))
+  var destination = path.resolve(app_root, path.join(target_path, $.util.replaceExtension(fileStats.name, '.md')));
   var destination_dir = path.parse(destination);
-
+ 
   // Create the directories.
   // Don't do this with media - manual
   mkdirp.sync(destination_dir.dir);
@@ -199,35 +194,64 @@ var rMarkdownFileHandler = function(root, fileStat, next) {
     stdio: 'inherit',
     cwd: app_root
   })
-    .on('close', next);
+  .on('close', next);
 };
 
-var rMarkdownEndHandler = function (done) {
+/**
+ * Process other
+ */
+var fileHandler = function( root, fileStats, next ) {  
+  
+    var collections_dir = path.join(src_root, 'collections');
+    var source = path.resolve(root, fileStats.name);
+    var target_path = path.join(path.relative(collections_dir, root));
+    var destination = path.resolve(app_root, path.join(target_path, fileStats.name));
+    var destination_dir = path.parse(destination);
+   
+    // Create the directories.
+    // Don't do this with media - manual
+    mkdirp.sync( destination_dir.dir );
+    gulp.src(source)
+      .pipe(gulp.dest(destination_dir.dir));
+    next();    
+};
+
+var rMarkdownEndHandler = function ( done ) {
   console.log("R markdown complete");
   done();
 }
 
-var handleRMarkdown = function(path, done){
-  var walker = walk.walk(path);
-  walker.on('file', rMarkdownFileHandler);
-  walker.on("end", function(){
+/* Single file update in watch */
+var handleRMarkdownUpdate = function( file ){
+  var rootPath = path.relative(process.cwd(), file.path);
+  var fileStats = objectAssign({
+    name: path.basename(file.path),
+    type: 'file'
+  }, fs.statSync(file.path) );
+  rMarkdownFileHandler(path.dirname(rootPath), fileStats, Q.defer().resolve);
+};
+
+var handleCollection = function( filePath, done ){
+  var walker = walk.walk( filePath );
+  walker.on( 'file', function( root, fileStats, next ){
+
+    var extension = path.extname( fileStats.name );
+    if( extension === '.Rmd' ){
+      rMarkdownFileHandler( root, fileStats, next );
+    } else if ( extension === '.png' ) {
+      fileHandler( root, fileStats, next );
+    } else {
+      return next();
+    }
+  });   
+  walker.on( 'end', function(){
     rMarkdownEndHandler(done);
   });
 };
 
-/* Single file update in watch */
-var handleRMarkdownUpdate = function(file){
-  var rootPath = path.relative(process.cwd(), file.path);
-  var fileStat = objectAssign({
-    name: path.basename(file.path),
-    type: 'file'
-  }, fs.statSync(file.path) );
-  rMarkdownFileHandler(path.dirname(rootPath), fileStat, Q.defer().resolve);
-};
-
-// Process all markdown files in a directory
-gulp.task('collections', function (done) {
-  handleRMarkdown(path.join(src_root, 'collections'), done);
+// Process all files in a directory
+gulp.task('collections', function ( done ) {
+  handleCollection( path.join(src_root, 'collections'), done );
 });
 
 /**
