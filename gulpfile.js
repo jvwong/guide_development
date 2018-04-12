@@ -287,7 +287,7 @@ gulp.task('browser-sync', [], function() {
       server: {
         baseDir: site_root
       },
-      port: '8080',
+      port: '9090',
       middleware: [
         modRewrite([
                     '^/guide/(.*) /$1 [L]' // baseurl un-mapping
@@ -327,7 +327,8 @@ gulp.task('clean', function(){
     path.join(app_root, '_workflows'),
     path.join(app_root, '_primers'),
     path.join(app_root, '_presentations'),
-    path.join(app_root, '_case_studies')
+    path.join(app_root, '_case_studies'),
+    path.join(app_root, 'cache')
   ])
     .pipe( clean() )
   ;
