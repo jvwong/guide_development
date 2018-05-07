@@ -30,12 +30,12 @@ var jekyll   = process.platform === 'win32' ? 'jekyll.bat' : 'jekyll';
 var messages = {
     jekyllBuild: '<span style="color: grey">Running:</span> $ jekyll build'
 };
+var noop = () => {};
 
 var app_root = './guide/'
 // Try to load _config.yml as json, or throw exception on error
 try {
   var jconfig = yaml.safeLoad(fs.readFileSync( app_root + '_config.yml', 'utf8'));
-  //console.log(jconfig);
 } catch (e) {
   console.log(e);
 }
@@ -105,8 +105,8 @@ gulp.task('bower', function() {
  */
 gulp.task('js', ['lint'], function(){
   return bundle( transform( getBrowserified() ) )
-    .pipe( gulp.dest(path.join(site_root, static_directory, 'js')) ) //direct
-    .pipe( browserSync.reload({stream:true}) )
+    // .pipe( gulp.dest(path.join(site_root, static_directory, 'js')) ) //direct
+    // .pipe( browserSync.reload({stream:true}) )
     .pipe( gulp.dest(path.join(static_root, 'js')) ) //in case of jekyll-build call
   ;
 });
@@ -138,9 +138,7 @@ gulp.task('js-deps', function(){
     .on( 'error', handleErr )
     .pipe( source('deps.js') )
     .pipe( buffer() )
-    .pipe( gulp.dest(path.join(site_root, static_directory, 'js')) ) //direct
-    .pipe( browserSync.reload({stream:true}) )
-    .pipe( gulp.dest(path.join(static_root, 'js')) ) //in case of jekyll-build call
+    .pipe( gulp.dest( path.join( static_root, 'js' ) ) ) //in case of jekyll-build call
   );
 });
 
@@ -157,10 +155,8 @@ var sass = function( s ){
       onError: browserSync.notify
     }) )
     .pipe( $.sourcemaps.write() )
-    .pipe( $.rename('main.css') )
-    .pipe( gulp.dest(path.join(site_root, static_directory, 'css')) ) //direct
-    .pipe( browserSync.reload({stream:true}) )
-    .pipe( gulp.dest(path.join(static_root, 'css')) ) //in case of jekyll-build call
+    .pipe( $.rename( 'main.css' ) )
+    .pipe( gulp.dest( path.join( static_root, 'css' ) ) )
   );
 };
 
@@ -172,24 +168,12 @@ gulp.task('css', function(){
 /**
  * Process Rmarkdown
  */
-var rMarkdownFileHandler = function( root, fileStats, next ) {  
-
-  var collections_dir = path.join(src_root, 'collections');
-  var source = path.resolve(root, fileStats.name);
-  var target_path = path.join(path.relative(collections_dir, root));
-  var media_path = path.join(target_path, $.util.replaceExtension(fileStats.name, ''))
-  var destination = path.resolve(app_root, path.join(target_path, $.util.replaceExtension(fileStats.name, '.md')));
-  var destination_dir = path.parse(destination);
- 
-  // Create the directories.
-  // Don't do this with media - manual
-  mkdirp.sync(destination_dir.dir);
-
+var rMarkdownFileHandler = function( source, destination, plots, next ) {
   cp.spawn( '/Library/Frameworks/R.framework/Versions/3.2/Resources/Rscript', [
      'build.R',
       source,
       destination,
-      media_path
+      plots
     ], {
     stdio: 'inherit',
     cwd: app_root
@@ -200,53 +184,67 @@ var rMarkdownFileHandler = function( root, fileStats, next ) {
 /**
  * Process other
  */
-var fileHandler = function( root, fileStats, next ) {  
-  
-    var collections_dir = path.join(src_root, 'collections');
-    var source = path.resolve(root, fileStats.name);
-    var target_path = path.join(path.relative(collections_dir, root));
-    var destination = path.resolve(app_root, path.join(target_path, fileStats.name));
-    var destination_dir = path.parse(destination);
-   
-    // Create the directories.
-    // Don't do this with media - manual
-    mkdirp.sync( destination_dir.dir );
-    gulp.src(source)
-      .pipe(gulp.dest(destination_dir.dir));
-    next();    
+var fileHandler = function( source, destination_dir, next ) {
+  gulp.src( source )
+    .pipe(gulp.dest( destination_dir ));
+  next();
 };
 
-var rMarkdownEndHandler = function ( done ) {
-  console.log("R markdown complete");
-  done();
+var fetchPaths = function( parsed ){
+
+  var collections_dir = path.join( src_root, 'collections' );
+  var source = path.join( parsed.dir, parsed.base );
+  var target_path = path.relative( collections_dir, parsed.dir );
+  var plot_path = path.join( static_directory, 'R', target_path.replace(/^_{1}/, ''), '/' )
+  var destination = path.resolve(
+    app_root,
+    path.join(
+      target_path,
+      parsed.ext === '.Rmd' ? parsed.name + '.md' : parsed.base
+    )
+  );
+  var destination_dir = path.join( path.parse( destination ).dir, '/' );
+
+  return {
+    "source": source,
+    "destination": destination,
+    "destination_dir": destination_dir,
+    "plots": plot_path
+  };
+};
+
+/*  fileHandler */
+var processFile = function( parsed, next ){
+  var paths = fetchPaths( parsed );
+  mkdirp.sync( paths.destination_dir );
+  if( parsed.ext === '.Rmd' ){
+    rMarkdownFileHandler( paths.source, paths.destination, paths.plots, next )
+  } else if ( !( /\.(DS_Store)$/i ).test( parsed.ext ) ) {
+    fileHandler( paths.source, paths.destination_dir, next )
+  } else {
+    next()
+  }
 }
 
-/* Single file update in watch */
-var handleRMarkdownUpdate = function( file ){
-  var rootPath = path.relative(process.cwd(), file.path);
-  var fileStats = objectAssign({
-    name: path.basename(file.path),
-    type: 'file'
-  }, fs.statSync(file.path) );
-  rMarkdownFileHandler(path.dirname(rootPath), fileStats, Q.defer().resolve);
+/* Single file event in watch */
+var handleCollectionUpdate = function( event ){
+  var parsed = path.parse( event.path );
+  var paths = fetchPaths( parsed );
+  if ( event.type === 'deleted' ) {
+    del( paths.destination ).then( noop );
+  } else {
+    processFile( parsed, noop );
+  }
 };
 
+/* Walk over each file and process accordinlgy */
 var handleCollection = function( filePath, done ){
   var walker = walk.walk( filePath );
   walker.on( 'file', function( root, fileStats, next ){
-
-    var extension = path.extname( fileStats.name );
-    if( extension === '.Rmd' ){
-      rMarkdownFileHandler( root, fileStats, next );
-    } else if ( extension === '.png' ) {
-      fileHandler( root, fileStats, next );
-    } else {
-      return next();
-    }
-  });   
-  walker.on( 'end', function(){
-    rMarkdownEndHandler(done);
+    var parsed = path.parse( path.resolve( root, fileStats.name ) );
+    processFile ( parsed, next );
   });
+  walker.on( 'end', done );
 };
 
 // Process all files in a directory
@@ -257,7 +255,7 @@ gulp.task('collections', function ( done ) {
 /**
  * Build the Jekyll Site
  */
-gulp.task('jekyll-build', [], function (done) {
+gulp.task('jekyll-build', [], function ( done ) {
     browserSync.notify(messages.jekyllBuild);
     return cp.spawn( jekyll, [
         'build',
@@ -274,8 +272,9 @@ gulp.task('jekyll-build', [], function (done) {
 /**
  * Rebuild Jekyll & do page reload
  */
-gulp.task('jekyll-rebuild', ['jekyll-build'], function () {
+gulp.task('jekyll-rebuild', ['jekyll-build'], function ( done ) {
     browserSync.reload();
+    done();
 });
 
 /**
@@ -304,15 +303,12 @@ gulp.task('watch', function () {
   gulp.watch( ['./package.json'], ['js-deps'] );
   gulp.watch( [path.join(src_root, 'js/**/*.js*')], ['js'] );
   gulp.watch( [path.join(src_root, 'sass/**/*.scss')], ['css'] );
-  gulp.watch( path.join(src_root, 'collections/**/*.Rmd') ).on('change', handleRMarkdownUpdate);
+  gulp.watch( path.join(src_root, 'collections/**/*.*'), handleCollectionUpdate );
   gulp.watch([
-    '_config*.yml',
-    '*.html',
-    '*.md',
-    '_includes/**/*.*',
-    '_layouts/**/*.*',
+    'index.md',
+    '_*/**/*.*',
     'media/**/*.*',
-    '**/*.md'
+    'public/**/*.*'
   ].map(function(p){ return path.join(app_root, p)}), ['jekyll-rebuild']);
 });
 
@@ -340,7 +336,7 @@ gulp.task('clean', function(){
 
 gulp.task('jekyll-build-base', [
     'collections'
-  ], function (done) {
+  ], function ( done ) {
      return cp.spawn( jekyll, [
          'build',
          '--config',
