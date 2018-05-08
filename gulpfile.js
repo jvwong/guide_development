@@ -57,6 +57,46 @@ var handleErr = function( err ){
   }
 };
 
+/**
+ * Task clean-collections: Clear out the collection folders
+ */
+gulp.task('clean-collections', function(){
+  return gulp.src([
+    path.join(app_root, '_workflows'),
+    path.join(app_root, '_primers'),
+    path.join(app_root, '_presentations'),
+    path.join(app_root, '_case_studies'),
+    path.join(app_root, 'cache')
+  ], { allowEmpty: true })
+    .pipe( clean() )
+  ;
+});
+
+/**
+ * Task clean: Clear out the build folders
+ */
+gulp.task('clean', gulp.parallel( 'clean-collections', function(){
+  return gulp.src([
+    static_root,
+    site_root
+  ], { allowEmpty: true })
+    .pipe( clean() )
+  ;
+}));
+
+/*
+ * Task lint: Lint the javascript
+ */
+gulp.task('lint', function () {
+  return gulp.src(path.join(src_root, 'js/**/*.js'))
+  .pipe($.jshint())
+  .pipe($.jshint.reporter( 'jshint-stylish' ));
+});
+
+
+/*
+ * Task js: Bundle the custom Javascript
+ */
 var getBrowserified = function( opts ){
   opts = objectAssign({
     debug: true,
@@ -93,42 +133,20 @@ var bundle = function( b ){
   ) ;
 };
 
-/*
- * Directory configured in ./.bowerrc
- */
-gulp.task('bower', function() {
-  return $.bower();
-});
-
-/*
- * Bundle the src/js dependencies to babel-compiled.js
- */
-gulp.task('js', ['lint'], function(){
+gulp.task('js', gulp.parallel('lint', function(){
   return bundle( transform( getBrowserified() ) )
-    // .pipe( gulp.dest(path.join(site_root, static_directory, 'js')) ) //direct
-    // .pipe( browserSync.reload({stream:true}) )
-    .pipe( gulp.dest(path.join(static_root, 'js')) ) //in case of jekyll-build call
+    .pipe( gulp.dest( path.join( static_root, 'js' ) ) ) //in case of jekyll-build call
   ;
-});
+}));
 
 /*
- * Lint the js
- */
-gulp.task('lint', function () {
-    return gulp.src(path.join(src_root, 'js/**/*.js'))
-    .pipe($.jshint())
-    .pipe($.jshint.reporter( 'jshint-stylish' ));
-});
-
-/*
- * Bundle the package.json dependencies to deps.js
+ * Task js-deps: Bundle the package.json 'dependencies'
  */
 gulp.task('js-deps', function(){
   var b = browserify({
     debug: false
   });
 
-  //deps is package.json dependencies
   deps.forEach(function( dep ){
     b.require( dep );
   });
@@ -142,13 +160,19 @@ gulp.task('js-deps', function(){
   );
 });
 
+
+/*
+ * Task css: Bundle style sheets
+ */
 var sass = function( s ){
   return ( s
     .pipe( $.plumber() )
     .pipe( $.sourcemaps.init() )
     .pipe( $.sass().on('error', $.sass.logError) )
     .pipe( $.sass({
-      includePaths: [path.join(src_root, 'sass')], //import
+      includePaths: [
+        path.join(src_root, 'sass')
+      ], //import
       sourceMap: true,
       sourceMapRoot: '../',
       outputStyle: 'compressed',
@@ -166,7 +190,7 @@ gulp.task('css', function(){
 
 
 /**
- * Process Rmarkdown
+ * Task collections: Handle the R Markdown files
  */
 var rMarkdownFileHandler = function( source, destination, plots, next ) {
   cp.spawn( '/Library/Frameworks/R.framework/Versions/3.2/Resources/Rscript', [
@@ -181,9 +205,6 @@ var rMarkdownFileHandler = function( source, destination, plots, next ) {
   .on('close', next);
 };
 
-/**
- * Process other
- */
 var fileHandler = function( source, destination_dir, next ) {
   gulp.src( source )
     .pipe(gulp.dest( destination_dir ));
@@ -213,7 +234,6 @@ var fetchPaths = function( parsed ){
   };
 };
 
-/*  fileHandler */
 var processFile = function( parsed, next ){
   var paths = fetchPaths( parsed );
   mkdirp.sync( paths.destination_dir );
@@ -226,7 +246,6 @@ var processFile = function( parsed, next ){
   }
 }
 
-/* Single file event in watch */
 var handleCollectionUpdate = function( event ){
   var parsed = path.parse( event.path );
   var paths = fetchPaths( parsed );
@@ -237,7 +256,6 @@ var handleCollectionUpdate = function( event ){
   }
 };
 
-/* Walk over each file and process accordinlgy */
 var handleCollection = function( filePath, done ){
   var walker = walk.walk( filePath );
   walker.on( 'file', function( root, fileStats, next ){
@@ -247,15 +265,29 @@ var handleCollection = function( filePath, done ){
   walker.on( 'end', done );
 };
 
-// Process all files in a directory
-gulp.task('collections', function ( done ) {
+gulp.task('collections', gulp.series( 'clean-collections', function ( done ) {
   handleCollection( path.join(src_root, 'collections'), done );
+}));
+
+/**
+ * Task jekyll: Build the site
+ */
+gulp.task('jekyll', function ( done ) {
+   return cp.spawn( jekyll, [
+       'build',
+       '--config',
+       '_config.yml'
+     ], {
+     stdio: 'inherit',
+     cwd: app_root
+   })
+     .on('close', done);
 });
 
 /**
- * Build the Jekyll Site
+ * Task jekyll-incremental: Incrementally build the Markdown to HTML
  */
-gulp.task('jekyll-build', [], function ( done ) {
+gulp.task('jekyll-incremental', function ( done ) {
     browserSync.notify(messages.jekyllBuild);
     return cp.spawn( jekyll, [
         'build',
@@ -270,17 +302,17 @@ gulp.task('jekyll-build', [], function ( done ) {
 });
 
 /**
- * Rebuild Jekyll & do page reload
+ * Task jekyll-rebuild: Reload browser
  */
-gulp.task('jekyll-rebuild', ['jekyll-build'], function ( done ) {
+gulp.task('jekyll-rebuild', gulp.series('jekyll-incremental', function ( done ) {
     browserSync.reload();
     done();
-});
+}));
 
 /**
- * Wait for jekyll-build, then launch the Server
+ * Task browser-sync: Start the reloadable  server
  */
-gulp.task('browser-sync', [], function() {
+gulp.task('browser-sync', function() {
     browserSync.init({
       // Serve files from the site_root directory
       server: {
@@ -296,63 +328,36 @@ gulp.task('browser-sync', [], function() {
 });
 
 /**
- * Watch scss files for changes & recompile
- * Watch html/md files, run jekyll & reload BrowserSync
+ * Task watch: Watch for file changes and build as needed
  */
 gulp.task('watch', function () {
-  gulp.watch( ['./package.json'], ['js-deps'] );
-  gulp.watch( [path.join(src_root, 'js/**/*.js*')], ['js'] );
-  gulp.watch( [path.join(src_root, 'sass/**/*.scss')], ['css'] );
-  gulp.watch( path.join(src_root, 'collections/**/*.*'), handleCollectionUpdate );
+  gulp.watch( './package.json', gulp.parallel( 'js-deps' ) );
+  gulp.watch( path.join( src_root, 'js/**/*.js*'), gulp.parallel( 'js' ) );
+  gulp.watch( path.join( src_root, 'sass/**/*.scss' ),  gulp.parallel( 'css' ) );
+  gulp.watch( path.join( src_root, 'collections/**/*.*' ) )
+    .on('change', handleCollectionUpdate );
   gulp.watch([
     'index.md',
     '_*/**/*.*',
     'media/**/*.*',
     'public/**/*.*'
-  ].map(function(p){ return path.join(app_root, p)}), ['jekyll-rebuild']);
+  ].map(function(p){
+    console.log(p);
+    return path.join(app_root, p)}), gulp.parallel( 'jekyll-rebuild' ));
 });
 
-gulp.task('default', ['browser-sync', 'watch'], function( next ){
-  next();
-});
+gulp.task('build',
+  gulp.series('clean',
+    gulp.parallel(
+      'js',
+      'js-deps',
+      'css',
+      gulp.series(
+        'collections',
+        'jekyll'
+      )
+    )
+  )
+)
 
-gulp.task('clean', function(){
-  return gulp.src([
-    static_root,
-    site_root,
-    path.join(app_root, '_workflows'),
-    path.join(app_root, '_primers'),
-    path.join(app_root, '_presentations'),
-    path.join(app_root, '_case_studies'),
-    path.join(app_root, 'cache')
-  ])
-    .pipe( clean() )
-  ;
-});
-
-/**
- * Build the entire site from scratch
- */
-
-gulp.task('jekyll-build-base', [
-    'collections'
-  ], function ( done ) {
-     return cp.spawn( jekyll, [
-         'build',
-         '--config',
-         '_config.yml'
-       ], {
-       stdio: 'inherit',
-       cwd: app_root
-     })
-       .on('close', done);
- });
-
-gulp.task('build', [
-  'bower',
-  'css',
-  'js-deps',
-  'js',
-  'jekyll-build-base'], function() {
-    return true;
-});
+gulp.task( 'default', gulp.parallel( 'browser-sync', 'watch' ) );
