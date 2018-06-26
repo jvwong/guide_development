@@ -61,5 +61,8 @@
     "iframe-resizer": "^3.5.7",
     "react": "^16.3.2",
     "react-dom": "^16.3.2"
+  },
+  "gulp-cli": {
+    "package": "gulp-v4"
   }
 }

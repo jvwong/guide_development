@@ -246,14 +246,15 @@ var processFile = function( parsed, next ){
   }
 }
 
-var handleCollectionUpdate = function( event ){
-  var parsed = path.parse( event.path );
+var handleCollectionUpdate = function( eventType, filepath ){
+  var parsed = path.parse( path.resolve(filepath) );
   var paths = fetchPaths( parsed );
-  if ( event.type === 'deleted' ) {
+  if ( eventType === 'unlink' ) {
     del( paths.destination ).then( noop );
   } else {
     processFile( parsed, noop );
   }
+
 };
 
 var handleCollection = function( filePath, done ){
@@ -335,7 +336,9 @@ gulp.task('watch', function () {
   gulp.watch( path.join( src_root, 'js/**/*.js*'), gulp.parallel( 'js' ) );
   gulp.watch( path.join( src_root, 'sass/**/*.scss' ),  gulp.parallel( 'css' ) );
   gulp.watch( path.join( src_root, 'collections/**/*.*' ) )
-    .on('change', handleCollectionUpdate );
+    .on('unlink', filepath => handleCollectionUpdate( 'unlink', filepath ) )
+    .on('change', filepath => handleCollectionUpdate( 'change', filepath ) )
+    .on('add', filepath => handleCollectionUpdate( 'add', filepath ) );
   gulp.watch([
     'index.md',
     '_*/**/*.*',
