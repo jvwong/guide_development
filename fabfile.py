@@ -32,8 +32,10 @@ def deploy(*args, **kwargs):
 
     print("Done")
 
-def _lbuild( environment='production' ):
-    local('cd guide && JEKYLL_ENV=%s jekyll build' % (environment,))
+def _lbuild( environment='production', config='_config.yml', source='build', destination='_site' ):
+    print(source)
+    print(destination)
+    local('cd guide && JEKYLL_ENV=%s jekyll build --config %s build --source %s --destination %s' % (environment, config, source, destination))
 
 def _lgitcommit(message='update `date +COMMIT-%F/%H%M`', branch='master'):
     with settings(warn_only=True):

@@ -40,9 +40,11 @@ try {
   console.log(e);
 }
 var src_root = path.join(app_root, jconfig.src_root);
+var build_directory = path.join(jconfig.build_root);
+var build_root = path.join(app_root, build_directory);
 var site_root = path.join(app_root, jconfig.site_root);
 var static_directory = path.join(jconfig.static_root);
-var static_root = path.join(app_root, static_directory);
+var static_root = path.join(build_root, static_directory);
 
 var logError = function( err ){
   notifier.notify({ title: pkg.name, message: 'Error: ' + err.message });
@@ -58,31 +60,17 @@ var handleErr = function( err ){
 };
 
 /**
- * Task clean-collections: Clear out the collection folders
+ * Task clean: Clear out the build folders
  */
-gulp.task('clean-collections', function(){
+gulp.task('clean', function(){
   return gulp.src([
-    path.join(app_root, '_workflows'),
-    path.join(app_root, '_primers'),
-    path.join(app_root, '_presentations'),
-    path.join(app_root, '_case_studies'),
-    path.join(app_root, 'cache')
+    build_root,
+    site_root,
+    path.join( app_root, 'cache' )
   ], { allowEmpty: true })
     .pipe( clean() )
   ;
 });
-
-/**
- * Task clean: Clear out the build folders
- */
-gulp.task('clean', gulp.parallel( 'clean-collections', function(){
-  return gulp.src([
-    static_root,
-    site_root
-  ], { allowEmpty: true })
-    .pipe( clean() )
-  ;
-}));
 
 /*
  * Task lint: Lint the javascript
@@ -171,7 +159,7 @@ var sass = function( s ){
     .pipe( $.sass().on('error', $.sass.logError) )
     .pipe( $.sass({
       includePaths: [
-        path.join(src_root, 'sass')
+        path.join(src_root, 'styles')
       ], //import
       sourceMap: true,
       sourceMapRoot: '../',
@@ -185,7 +173,33 @@ var sass = function( s ){
 };
 
 gulp.task('css', function(){
-  return sass( gulp.src( path.join(src_root, 'sass', 'main.scss')) );
+  return sass( gulp.src( path.join(src_root, 'styles', 'main.scss')) );
+});
+
+
+/**
+ * Task media
+ */
+gulp.task('media', function(){
+  return gulp.src( [
+      path.join(src_root, 'media/**/*')
+    ], {
+      base: src_root
+    })
+    .pipe(gulp.dest( path.join( static_root ) ));
+});
+
+/**
+ * Task html
+ */
+gulp.task('html', function(){
+  return gulp.src( [
+      path.join(src_root, '*.html'),
+      path.join(src_root, '*.md')
+    ], {
+      base: src_root
+    })
+    .pipe(gulp.dest( path.join( build_root ) ));
 });
 
 
@@ -216,9 +230,13 @@ var fetchPaths = function( parsed ){
   var collections_dir = path.join( src_root, 'collections' );
   var source = path.join( parsed.dir, parsed.base );
   var target_path = path.relative( collections_dir, parsed.dir );
-  var plot_path = path.join( static_directory, 'R', target_path.replace(/^_{1}/, ''), '/' )
+  var plot_path = path.join(
+    static_directory,
+    'R',
+    target_path.replace(/^_{1}/, ''),
+    '/' ); //unfortunately, this is how knitr builds paths
   var destination = path.resolve(
-    app_root,
+    build_root,
     path.join(
       target_path,
       parsed.ext === '.Rmd' ? parsed.name + '.md' : parsed.base
@@ -266,9 +284,41 @@ var handleCollection = function( filePath, done ){
   walker.on( 'end', done );
 };
 
-gulp.task('collections', gulp.series( 'clean-collections', function ( done ) {
+gulp.task('build-collections', function ( done ) {
   handleCollection( path.join(src_root, 'collections'), done );
-}));
+});
+
+
+/* Dumb workaround for R figures */
+gulp.task('figure', function(){
+  return gulp.src( [
+    path.join(app_root, static_directory, '**/*.*')
+  ], {
+    base: path.join(app_root, static_directory)
+  })
+  .pipe(gulp.dest( path.join( build_root, static_directory ) ));
+});
+
+gulp.task('clean-figure-source', function(){
+  return gulp.src([
+    path.join( app_root, static_directory )
+  ], { allowEmpty: true })
+    .pipe( clean() );
+});
+
+gulp.task('build-figures',
+  gulp.series(
+    'figure',
+    'clean-figure-source'
+  )
+);
+
+gulp.task('collections',
+  gulp.series(
+    'build-collections',
+    'build-figures'
+  )
+)
 
 /**
  * Task jekyll: Build the site
@@ -277,7 +327,11 @@ gulp.task('jekyll', function ( done ) {
    return cp.spawn( jekyll, [
        'build',
        '--config',
-       '_config.yml'
+       '_config.yml',
+       '--source',
+        path.resolve( build_root ),
+        '--destination',
+        path.resolve( site_root )
      ], {
      stdio: 'inherit',
      cwd: app_root
@@ -294,7 +348,11 @@ gulp.task('jekyll-incremental', function ( done ) {
         'build',
         '--incremental',
         '--config',
-        '_config.yml'
+        '_config.yml',
+        '--source',
+        path.resolve( build_root ),
+        '--destination',
+        path.resolve( site_root )
       ], {
       stdio: 'inherit',
       cwd: app_root
@@ -334,19 +392,19 @@ gulp.task('browser-sync', function() {
 gulp.task('watch', function () {
   gulp.watch( './package.json', gulp.parallel( 'js-deps' ) );
   gulp.watch( path.join( src_root, 'js/**/*.js*'), gulp.parallel( 'js' ) );
-  gulp.watch( path.join( src_root, 'sass/**/*.scss' ),  gulp.parallel( 'css' ) );
+  gulp.watch( path.join( src_root, 'styles/**/*.*' ),  gulp.parallel( 'css' ) );
   gulp.watch( path.join( src_root, 'collections/**/*.*' ) )
     .on('unlink', filepath => handleCollectionUpdate( 'unlink', filepath ) )
     .on('change', filepath => handleCollectionUpdate( 'change', filepath ) )
     .on('add', filepath => handleCollectionUpdate( 'add', filepath ) );
-  gulp.watch([
-    'index.md',
-    '_*/**/*.*',
-    'media/**/*.*',
-    'public/**/*.*'
-  ].map(function(p){
-    console.log(p);
-    return path.join(app_root, p)}), gulp.parallel( 'jekyll-rebuild' ));
+  gulp.watch( path.join( app_root, static_directory ),  gulp.series( 'build-figures' ) );
+  gulp.watch(
+    [
+      path.join( build_root, 'index.md'),
+      path.join( build_root, '_*/**/*.*'),
+      path.join( build_root, 'public/**/*.*')
+    ],
+    gulp.parallel( 'jekyll-rebuild' ));
 });
 
 gulp.task('build',
@@ -355,6 +413,8 @@ gulp.task('build',
       'js',
       'js-deps',
       'css',
+      'media',
+      'html',
       gulp.series(
         'collections',
         'jekyll'
