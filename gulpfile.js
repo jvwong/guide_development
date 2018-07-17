@@ -168,6 +168,8 @@ var sass = function( s ){
     }) )
     .pipe( $.sourcemaps.write() )
     .pipe( $.rename( 'main.css' ) )
+    .pipe( gulp.dest(path.join(site_root, static_directory, 'css')) ) //direct
+    .pipe( browserSync.reload({stream:true}) )
     .pipe( gulp.dest( path.join( static_root, 'css' ) ) )
   );
 };
@@ -272,8 +274,11 @@ var handleCollectionUpdate = function( eventType, filepath ){
   } else {
     processFile( parsed, noop );
   }
-
 };
+
+gulp.task('update-collection', function ( done ) {
+  done();
+});
 
 var handleCollection = function( filePath, done ){
   var walker = walk.walk( filePath );
@@ -398,6 +403,8 @@ gulp.task('watch', function () {
     .on('change', filepath => handleCollectionUpdate( 'change', filepath ) )
     .on('add', filepath => handleCollectionUpdate( 'add', filepath ) );
   gulp.watch( path.join( app_root, static_directory ),  gulp.series( 'build-figures' ) );
+  gulp.watch( path.join( src_root, '*.(html|md)' ), gulp.parallel( 'html' ) );
+  gulp.watch( path.join( src_root, 'media/**/*.*' ), gulp.parallel( 'media' ) );
   gulp.watch(
     [
       path.join( build_root, 'index.md'),
