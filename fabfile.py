@@ -27,8 +27,8 @@ def deploy(*args, **kwargs):
     print("Pushing to gh-pages...")
     _lgitpush()
 
-    # print("Tagging this as LIVE...")
-    # _lgittag()
+    print("Tagging this as LIVE...")
+    _lgittag()
 
     print("Done")
 
