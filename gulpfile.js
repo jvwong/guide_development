@@ -30,7 +30,7 @@ var jekyll   = process.platform === 'win32' ? 'jekyll.bat' : 'jekyll';
 var messages = {
     jekyllBuild: '<span style="color: grey">Running:</span> $ jekyll build'
 };
-var noop = () => {};
+var noop = function(){};
 
 var app_root = './guide/'
 // Try to load _config.yml as json, or throw exception on error
@@ -155,18 +155,18 @@ gulp.task('js-deps', function(){
 var sass = function( s ){
   return ( s
     .pipe( $.plumber() )
-    .pipe( $.sourcemaps.init() )
+    // .pipe( $.sourcemaps.init() )
     .pipe( $.sass().on('error', $.sass.logError) )
     .pipe( $.sass({
       includePaths: [
         path.join(src_root, 'styles')
       ], //import
-      sourceMap: true,
-      sourceMapRoot: '../',
+      sourceMap: false,
+      // sourceMapRoot: '../',
       outputStyle: 'compressed',
       onError: browserSync.notify
     }) )
-    .pipe( $.sourcemaps.write() )
+    // .pipe( $.sourcemaps.write() )
     .pipe( $.rename( 'main.css' ) )
     .pipe( gulp.dest(path.join(site_root, static_directory, 'css')) ) //direct
     .pipe( browserSync.reload({stream:true}) )
@@ -399,9 +399,9 @@ gulp.task('watch', function () {
   gulp.watch( path.join( src_root, 'js/**/*.js*'), gulp.parallel( 'js' ) );
   gulp.watch( path.join( src_root, 'styles/**/*.*' ),  gulp.parallel( 'css' ) );
   gulp.watch( path.join( src_root, 'collections/**/*.*' ) )
-    .on('unlink', filepath => handleCollectionUpdate( 'unlink', filepath ) )
-    .on('change', filepath => handleCollectionUpdate( 'change', filepath ) )
-    .on('add', filepath => handleCollectionUpdate( 'add', filepath ) );
+    .on('unlink', function(filepath){ return handleCollectionUpdate( 'unlink', filepath );} )
+    .on('change', function(filepath){ return handleCollectionUpdate( 'change', filepath );} )
+    .on('add', function(filepath){ return handleCollectionUpdate( 'add', filepath );} )
   gulp.watch( path.join( app_root, static_directory ),  gulp.series( 'build-figures' ) );
   gulp.watch( path.join( src_root, '*.(html|md)' ), gulp.parallel( 'html' ) );
   gulp.watch( path.join( src_root, 'media/**/*.*' ), gulp.parallel( 'media' ) );
