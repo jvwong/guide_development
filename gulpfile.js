@@ -155,24 +155,25 @@ gulp.task('js-deps', function(){
 var sass = function( s ){
   return ( s
     .pipe( $.plumber() )
-    // .pipe( $.sourcemaps.init() )
+    .pipe( $.sourcemaps.init() )
     .pipe( $.sass().on('error', $.sass.logError) )
     .pipe( $.sass({
       includePaths: [
         path.join(src_root, 'styles')
       ], //import
-      sourceMap: false,
-      // sourceMapRoot: '../',
+      sourceMap: true,
+      sourceMapRoot: '../',
       outputStyle: 'compressed',
       onError: browserSync.notify
     }) )
-    // .pipe( $.sourcemaps.write() )
+    .pipe( $.sourcemaps.write() )
     .pipe( $.rename( 'main.css' ) )
     .pipe( gulp.dest(path.join(site_root, static_directory, 'css')) ) //direct
     .pipe( browserSync.reload({stream:true}) )
     .pipe( gulp.dest( path.join( static_root, 'css' ) ) )
   );
 };
+
 
 gulp.task('css', function(){
   return sass( gulp.src( path.join(src_root, 'styles', 'main.scss')) );
@@ -209,7 +210,7 @@ gulp.task('html', function(){
  * Task collections: Handle the R Markdown files
  */
 var rMarkdownFileHandler = function( source, destination, plots, next ) {
-  cp.spawn( '/Library/Frameworks/R.framework/Versions/3.2/Resources/Rscript', [
+  cp.spawn( '/Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/Rscript', [
      'build.R',
       source,
       destination,
