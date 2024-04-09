@@ -210,7 +210,7 @@ gulp.task('html', function(){
  * Task collections: Handle the R Markdown files
  */
 var rMarkdownFileHandler = function( source, destination, plots, next ) {
-  cp.spawn( '/Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/Rscript', [
+  cp.spawn( '/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/Rscript', [
      'build.R',
       source,
       destination,
