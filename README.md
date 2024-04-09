@@ -33,7 +33,7 @@ This decription was created last using Mac OS: Sonoma 14.1.1. In this case, inst
 
 - Install [R](https://cran.r-project.org/bin/macosx/) (v4.3)
 - Install dependencies
-  - `install.packages(c("httpuv", "evaluate","jsonlite","knitr","later","magrittr","promises","R6","Rcpp","rlang","servr","xfun"))`
+  - `install.packages(c("httpuv", "evaluate","jsonlite","knitr","later","magrittr","promises","R6","Rcpp","rlang","servr","xfun", "ggplot2", "gridExtra", "ggplot"))`
 
 ### Configure, build and run server
 
