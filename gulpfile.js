@@ -3,10 +3,8 @@ var mkdirp = require('mkdirp');
 var path = require('path');
 var objectAssign = require('object-assign');
 var gulp = require('gulp');
-var livereload = require('gulp-livereload');
 var browserify = require('browserify');
 var babelify = require('babelify');
-var watchify = require('watchify');
 var del = require('del');
 var paths = require('vinyl-paths');
 var source = require('vinyl-source-stream');
@@ -15,7 +13,6 @@ var clean = function(){ return paths( del ); };
 var notifier = require('node-notifier');
 // Loads *gulp* plugins from package dependencies and attaches them to $
 var $ = require('gulp-load-plugins')();
-var runSequence = require('run-sequence');
 var pkg = require('./package.json');
 var deps = Object.keys( pkg.dependencies || {} );
 var yaml = require('js-yaml');
@@ -23,14 +20,10 @@ var fs   = require('fs');
 var walk = require('walk');
 var Q = require('q');
 
-var browserSync = require('browser-sync').create();
 var modRewrite  = require('connect-modrewrite');
 var cp          = require('child_process');
 var jekyll   = process.platform === 'win32' ? 'jekyll.bat' : 'jekyll';
-var messages = {
-    jekyllBuild: '<span style="color: grey">Running:</span> $ jekyll build'
-};
-var noop = () => {};
+var noop = function(){};
 
 var app_root = './guide/'
 // Try to load _config.yml as json, or throw exception on error
@@ -164,15 +157,14 @@ var sass = function( s ){
       sourceMap: true,
       sourceMapRoot: '../',
       outputStyle: 'compressed',
-      onError: browserSync.notify
     }) )
     .pipe( $.sourcemaps.write() )
     .pipe( $.rename( 'main.css' ) )
     .pipe( gulp.dest(path.join(site_root, static_directory, 'css')) ) //direct
-    .pipe( browserSync.reload({stream:true}) )
     .pipe( gulp.dest( path.join( static_root, 'css' ) ) )
   );
 };
+
 
 gulp.task('css', function(){
   return sass( gulp.src( path.join(src_root, 'styles', 'main.scss')) );
@@ -209,7 +201,7 @@ gulp.task('html', function(){
  * Task collections: Handle the R Markdown files
  */
 var rMarkdownFileHandler = function( source, destination, plots, next ) {
-  cp.spawn( '/Library/Frameworks/R.framework/Versions/3.2/Resources/Rscript', [
+  cp.spawn( '/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/Rscript', [
      'build.R',
       source,
       destination,
@@ -348,7 +340,6 @@ gulp.task('jekyll', function ( done ) {
  * Task jekyll-incremental: Incrementally build the Markdown to HTML
  */
 gulp.task('jekyll-incremental', function ( done ) {
-    browserSync.notify(messages.jekyllBuild);
     return cp.spawn( jekyll, [
         'build',
         '--incremental',
@@ -369,27 +360,8 @@ gulp.task('jekyll-incremental', function ( done ) {
  * Task jekyll-rebuild: Reload browser
  */
 gulp.task('jekyll-rebuild', gulp.series('jekyll-incremental', function ( done ) {
-    browserSync.reload();
     done();
 }));
-
-/**
- * Task browser-sync: Start the reloadable  server
- */
-gulp.task('browser-sync', function() {
-    browserSync.init({
-      // Serve files from the site_root directory
-      server: {
-        baseDir: site_root
-      },
-      port: '9090',
-      middleware: [
-        modRewrite([
-                    '^/guide/(.*) /$1 [L]' // baseurl un-mapping
-                ])
-      ]
-    });
-});
 
 /**
  * Task watch: Watch for file changes and build as needed
@@ -399,9 +371,9 @@ gulp.task('watch', function () {
   gulp.watch( path.join( src_root, 'js/**/*.js*'), gulp.parallel( 'js' ) );
   gulp.watch( path.join( src_root, 'styles/**/*.*' ),  gulp.parallel( 'css' ) );
   gulp.watch( path.join( src_root, 'collections/**/*.*' ) )
-    .on('unlink', filepath => handleCollectionUpdate( 'unlink', filepath ) )
-    .on('change', filepath => handleCollectionUpdate( 'change', filepath ) )
-    .on('add', filepath => handleCollectionUpdate( 'add', filepath ) );
+    .on('unlink', function(filepath){ return handleCollectionUpdate( 'unlink', filepath );} )
+    .on('change', function(filepath){ return handleCollectionUpdate( 'change', filepath );} )
+    .on('add', function(filepath){ return handleCollectionUpdate( 'add', filepath );} )
   gulp.watch( path.join( app_root, static_directory ),  gulp.series( 'build-figures' ) );
   gulp.watch( path.join( src_root, '*.(html|md)' ), gulp.parallel( 'html' ) );
   gulp.watch( path.join( src_root, 'media/**/*.*' ), gulp.parallel( 'media' ) );
@@ -430,4 +402,25 @@ gulp.task('build',
   )
 )
 
-gulp.task( 'default', gulp.parallel( 'browser-sync', 'watch' ) );
+// Gulp task to create a web server
+gulp.task('connect', function () {
+  $.connect.server({
+      root: site_root,
+      port: '9090',
+      livereload: true,
+      middleware: function(connect, opt) {
+        return [
+          modRewrite([
+            '^/guide/(.*) /$1 [L]' // baseurl un-mapping
+          ])
+        ]
+      }
+  });
+});
+
+gulp.task( 'default',
+  gulp.parallel(
+    'connect',
+    'watch'
+  )
+);
