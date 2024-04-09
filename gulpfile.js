@@ -196,12 +196,23 @@ gulp.task('html', function(){
     .pipe(gulp.dest( path.join( build_root ) ));
 });
 
+/**
+ * Task include
+ */
+gulp.task('include', function(){
+  return gulp.src( [
+    path.join(src_root, '.nojekyll'),
+  ], {
+    base: src_root
+  })
+  .pipe(gulp.dest( path.join( build_root ) ));
+});
 
 /**
  * Task collections: Handle the R Markdown files
  */
 var rMarkdownFileHandler = function( source, destination, plots, next ) {
-  cp.spawn( '/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/Rscript', [
+  cp.spawn( '/Library/Frameworks/R.framework/Versions/3.2/Resources/Rscript', [
      'build.R',
       source,
       destination,
@@ -394,6 +405,7 @@ gulp.task('build',
       'css',
       'media',
       'html',
+      'include',
       gulp.series(
         'collections',
         'jekyll'
