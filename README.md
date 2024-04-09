@@ -4,21 +4,48 @@ This remote provides a collections of tools that support development of the [Pat
 
 Briefly, the code for the Guide is nested as a subtree inside this repo. It is built and pushed directly to the gh-pages branch where it can be served by GitHub Pages. This repo contains a multitude of tools to support development including:
 
-  - R Markdown file processing and copying
-	- Watch for file changes and autoreload of the browser
-	- CSS and JavaScript file processing
+- R Markdown file processing and copying
+- Watch for file changes
+- CSS and JavaScript file processing
+- Development server
 
-## Getting started
+## Software Dependencies
 
-The following section describes how to get the site running locally. The versions are those that are known to play nice. Mileage may vary with other versions.
+This decription was created last using Mac OS: Sonoma 14.1.1. In this case, install or update Xcode (>=v15.3) through the App Store.
 
-### Software Requirements
-- [x] [Git](https://git-scm.com/)
-- [x] [Jekyll](https://jekyllrb.com/docs/installation/) (3.1.6)
-- [x] [Python](https://www.python.org/download/releases/2.7/) (2.7)
-- [x] [Node](https://nodejs.org/en/) (0.10.26)
-- [x] [R](https://www.r-project.org/) (3.2.3)
-- [x] [Fabric](http://www.fabfile.org/) (1.11.1)
+### Python
+
+- Set python version
+  - [pyenv](https://github.com/pyenv/pyenv)
+    - `pyenv install 2.7.18`
+- Install dependencies
+  - [fabric](https://www.fabfile.org/) (v1.11)
+
+### Ruby & Jekyll
+
+- Install the chruby version manager (v0.3.9)
+  - Follow instructions on [Jekyll site](https://jekyllrb.com/docs/installation/macos/) to install Ruby v2.7.8
+- Install Jekyll: 4.3.3
+  - `gem install jekyll`
+  - `cd guide && bundle install`
+
+### R
+
+- Install [R](https://cran.r-project.org/bin/macosx/) (v4.3)
+- Install dependencies
+  - `install.packages(c("httpuv", "evaluate","jsonlite","knitr","later","magrittr","promises","R6","Rcpp","rlang","servr","xfun"))`
+
+### Configure, build and run server
+
+- `gulpfile.js`
+  - Point `rMarkdownFileHandler` at path to your R install (e.g. `/Library/Frameworks/R.framework/Versions/<the install ed version>/Resources/Rscript`)
+- Install dependencies
+  - `nvm use`
+  - `npm i`
+- Run a local version
+  - `npm run dev`
+
+Open your browser to http://localhost:9090
 
 ### Run the site
 
@@ -32,7 +59,7 @@ The following section describes how to get the site running locally. The version
 2. Install dependencies
 
 	``` shell
-	  $ npm install && bower install
+	  $ npm install
 	```
 
 2. Run the app using a NPM script
@@ -41,7 +68,7 @@ The following section describes how to get the site running locally. The version
 	  $ npm run dev
 	```
 
-This should build the necessary files inside `src` and copy them over into the `guide` parent directory. It should open a browser to [http://localhost:8080/](http://localhost:8080/) automatically when done where you should see the site.
+This should build the necessary files inside `src` and copy them over into the `guide` parent directory. It should open a browser to [http://localhost:9090/](http://localhost:9090/) automatically when done where you should see the site.
 
 ## Build
 
